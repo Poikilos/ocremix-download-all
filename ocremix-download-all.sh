@@ -49,14 +49,19 @@ else
 END
 fi
 
-FOLDER="OCRemix";
-START=1;
-END=3000;
-MIRROR="ocrmirror.org";
-LIMIT="100m";
-WAIT=0;
+if [ -z "$FOLDER" ]; then FOLDER="OCRemix"; fi
+if [ -z "$START" ]; then START=1; fi
+if [ -z "$END" ]; then END=3000; fi
+if [ -z "$MIRROR" ]; then MIRROR="ocrmirror.org"; fi
+if [ -z "$LIMIT" ]; then LIMIT="100m"; fi
+if [ -z "$WAIT" ]; then WAIT=0; fi
 
-
+echo "FOLDER=$FOLDER"
+echo "START=$START"
+echo "END=$END"
+echo "MIRROR=$MIRROR"
+echo "LIMIT=$LIMIT"
+echo "WAIT=$WAIT"
 
 cd $FOLDER
 for ((i=$START;i<=$END;i++)); do
