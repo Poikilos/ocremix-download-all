@@ -63,7 +63,7 @@ echo "MIRROR=$MIRROR"
 echo "LIMIT=$LIMIT"
 echo "WAIT=$WAIT"
 
-cd $FOLDER
+cd "$FOLDER"
 for ((i=$START;i<=$END;i++)); do
     strlen=${#i};
     case $strlen in
