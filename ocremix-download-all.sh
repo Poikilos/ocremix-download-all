@@ -64,6 +64,12 @@ echo "LIMIT=$LIMIT"
 echo "WAIT=$WAIT"
 
 cd "$FOLDER"
+if [ $? -ne 0 ]; then
+    echo "Error: 'cd \"$FOLDER\"' failed."
+    exit 1
+else
+    echo "* in \"`pwd`\""
+fi
 for ((i=$START;i<=$END;i++)); do
     strlen=${#i};
     case $strlen in
