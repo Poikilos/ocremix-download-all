@@ -80,10 +80,15 @@ for ((i=$START;i<=$END;i++)); do
         "5") file="$i";     ;;
     esac
     echo "Retrieving OCR$file DATA";
-    url=$(curl --silent http://ocremix.org/remix/OCR$file/ | grep $MIRROR | sed 's/<a href=\"\(.*\)\">\(.*\)/\1/');
+    url=$(curl --silent https://ocremix.org/remix/OCR$file | grep $MIRROR | sed 's/<a href=\"\(.*\)\">\(.*\)/\1/');
+    url=$(echo $url | sed 's/<[^>]*>/\n/g');
+    # ^ remove additional tags such as <li>
     if [ -n "$url" ]; then
         echo "Retrieving MP3";
         wget --limit-rate=$LIMIT -c -nv $url
+        if [ $? -ne 0 ]; then
+            echo "* Error: Downloading $url failed."
+        fi
         if [ $WAIT -gt 0 ]; then
             echo "Waiting $WAIT seconds.";
             sleep $WAIT;
