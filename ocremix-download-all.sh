@@ -6,6 +6,7 @@ if [ -f "$SHOW_W" ]; then
     rm "$SHOW_W"
 fi
 
+
 DST="/dev/null"
 if [ "@$1" = "@show" ]; then
     if [ "@$2" = "@c" ]; then
@@ -56,12 +57,120 @@ if [ -z "$MIRROR" ]; then MIRROR="ocrmirror.org"; fi
 if [ -z "$LIMIT" ]; then LIMIT="100m"; fi
 if [ -z "$WAIT" ]; then WAIT=0; fi
 
-echo "FOLDER=$FOLDER"
-echo "START=$START"
-echo "END=$END"
-echo "MIRROR=$MIRROR"
-echo "LIMIT=$LIMIT"
-echo "WAIT=$WAIT"
+myConfsDir="$HOME/.config/ocremix-download-all"
+mkdir -p "$myConfsDir"
+myConf="$myConfsDir/settings.rc"
+
+_FOLDER="$FOLDER"
+_START="$START"
+_END="$END"
+_LIMIT="$LIMIT"
+_WAIT="$WAIT"
+
+if [ -f "$myConf" ]; then
+    . $myConf
+fi
+
+if [ "@$SHOW_BANDWIDTH_WARNING" = "@" ]; then
+    SHOW_BANDWIDTH_WARNING=true
+fi
+
+if [ ! -f "$myConf" ]; then
+    touch "$myConf"
+fi
+
+if [ -z "`cat $myConf | grep FOLDER`" ]; then
+    echo "FOLDER=$FOLDER" >> "$myConf"
+fi
+if [ -z "`cat $myConf | grep START`" ]; then
+    echo "START=$START" >> "$myConf"
+fi
+if [ -z "`cat $myConf | grep END`" ]; then
+    echo "END=$END" >> "$myConf"
+fi
+if [ -z "`cat $myConf | grep MIRROR`" ]; then
+    echo "MIRROR=$MIRROR" >> "$myConf"
+fi
+if [ -z "`cat $myConf | grep LIMIT`" ]; then
+    echo "LIMIT=$LIMIT" >> "$myConf"
+fi
+if [ -z "`cat $myConf | grep WAIT`" ]; then
+    echo "WAIT=$WAIT" >> "$myConf"
+fi
+
+echo
+
+echo "\"$myConf\":"
+cat "$myConf"
+
+echo
+_CHANGED=false
+if [ "@$_FOLDER" != "@" ]; then
+    FOLDER="$_FOLDER"
+    echo "overridden by environment: FOLDER=$FOLDER"
+    _CHANGED=true
+fi
+if [ "@$_START" != "@" ]; then
+    START="$_START"
+    echo "overridden by environment: START=$START"
+    _CHANGED=true
+fi
+if [ "@$_END" != "@" ]; then
+    END="$_END"
+    echo "overridden by environment: END=$END"
+    _CHANGED=true
+fi
+if [ "@$_MIRROR" != "@" ]; then
+    MIRROR="$_MIRROR"
+    echo "overridden by environment: MIRROR=$MIRROR"
+    _CHANGED=true
+fi
+if [ "@$_WAIT" != "@" ]; then
+    WAIT="$_WAIT"
+    echo "overridden by environment: WAIT=$WAIT"
+    _CHANGED=true
+fi
+
+if [ "@$_CHANGED" = "@true" ]; then
+    echo
+    printf "* saving the above new settings..."
+    echo "FOLDER=$FOLDER" > "$myConf"
+    echo "START=$START" >> "$myConf"
+    echo "END=$END" >> "$myConf"
+    echo "MIRROR=$MIRROR" >> "$myConf"
+    echo "LIMIT=$LIMIT" >> "$myConf"
+    echo "WAIT=$WAIT" >> "$myConf"
+    echo "SHOW_BANDWIDTH_WARNING=$SHOW_BANDWIDTH_WARNING" >> "$myConf"
+    echo "LAST_RUN_DATE=`date '+%Y-%m-%d'`" >> "$myConf"
+    if [ $? -ne 0 ]; then
+        echo "FAILED"
+    else
+        echo "OK"
+    fi
+fi
+echo
+
+
+if [ "@$SHOW_BANDWIDTH_WARNING" = "@true" ]; then
+    echo
+    echo "First download using torrent to avoid slamming the servers:"
+    echo "<https://ocremix.org/torrents>"
+    echo
+    echo "then use this script to only download updated files, otherwise change the START and END environment variables in $myConf (limit the bitrate in bytes as per wget --limit-rate using the LIMIT setting)!"
+    sleep 2
+    echo "Press Ctrl C within 5 seconds to cancel..."
+    sleep 1
+    echo "4..."
+    sleep 1
+    echo "3..."
+    sleep 1
+    echo "2..."
+    sleep 1
+    echo "1..."
+    sleep 1
+    echo "SHOW_BANDWIDTH_WARNING=false" >> "$myConf"
+fi
+
 
 cd "$FOLDER"
 if [ $? -ne 0 ]; then
@@ -70,6 +179,7 @@ if [ $? -ne 0 ]; then
 else
     echo "* in \"`pwd`\""
 fi
+
 for ((i=$START;i<=$END;i++)); do
     strlen=${#i};
     case $strlen in
