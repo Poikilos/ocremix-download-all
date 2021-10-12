@@ -204,6 +204,7 @@ for ((i=$START;i<=$END;i++)); do
     LOGGABLE_HTML_URL="https://ocremix.org/remix/OCR$file"
     url=$(curl --silent https://ocremix.org/remix/OCR$file | grep $MIRROR | sed 's/<a href=\"\(.*\)\">\(.*\)/\1/');
     url=$(echo $url | sed 's/<[^>]*>/\n/g');
+    url=$(echo "$url" | sed 's/&amp;/\&/g'); # replace &amp; with & (See <https://www.unix.com/unix-for-dummies-questions-and-answers/158742-replace.html>)
     # ^ remove additional tags such as <li>
     if [ -n "$url" ]; then
         # -n: non-zero-length string
@@ -232,9 +233,10 @@ for ((i=$START;i<=$END;i++)); do
             echo "#`pwd`/$DL_NAME" | tee -a "$LOG_PATH"
         fi
     else
-        ERROR="* Error: URL=\"$url\" (blank) for OCR$file (See <$LOGGABLE_HTML_URL>)";
+        # ERROR="* Error: URL=\"$url\" (blank) for OCR$file (See <$LOGGABLE_HTML_URL>)";
+        ERROR="* INFO: There was no song URL at the page <$LOGGABLE_HTML_URL> (This is only a problem if it happens in all cases)."
         echo "$ERROR" | tee -a "$LOG_PATH"
     fi
 done
 
-echo "# Done $i" | tee -a "$LOG_PATH"
+echo "# Done $START to $END" | tee -a "$LOG_PATH"
