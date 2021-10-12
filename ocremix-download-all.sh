@@ -6,6 +6,11 @@ if [ -f "$SHOW_W" ]; then
     rm "$SHOW_W"
 fi
 
+_DATE_STRING="`date '+%Y-%m-%d'`"
+LOG_PATH="$HOME/.var/log/ocremix-download-all-$_DATE_STRING.log"
+
+echo | tee -a "$LOG_PATH"
+echo "#`date`" | tee -a "$LOG_PATH"
 
 DST="/dev/null"
 if [ "@$1" = "@show" ]; then
@@ -80,7 +85,7 @@ if [ ! -f "$myConf" ]; then
 fi
 
 if [ -z "`cat $myConf | grep FOLDER`" ]; then
-    echo "FOLDER=$FOLDER" >> "$myConf"
+    echo "FOLDER=\"$FOLDER\"" >> "$myConf"
 fi
 if [ -z "`cat $myConf | grep START`" ]; then
     echo "START=$START" >> "$myConf"
@@ -134,7 +139,7 @@ fi
 if [ "@$_CHANGED" = "@true" ]; then
     echo
     printf "* saving the above new settings..."
-    echo "FOLDER=$FOLDER" > "$myConf"
+    echo "FOLDER=\"$FOLDER\"" > "$myConf"
     echo "START=$START" >> "$myConf"
     echo "END=$END" >> "$myConf"
     echo "MIRROR=$MIRROR" >> "$myConf"
@@ -180,8 +185,14 @@ else
     echo "* in \"`pwd`\""
 fi
 
+
+echo "#PWD=\"`pwd`\"" | tee -a "$LOG_PATH"
+echo "#START=$START" | tee -a "$LOG_PATH"
+echo "#END=$END" | tee -a "$LOG_PATH"
+
 for ((i=$START;i<=$END;i++)); do
     strlen=${#i};
+    ERROR=""
     case $strlen in
         "1") file="0000$i"; ;;
         "2") file="000$i";  ;;
@@ -189,21 +200,41 @@ for ((i=$START;i<=$END;i++)); do
         "4") file="0$i";    ;;
         "5") file="$i";     ;;
     esac
-    echo "Retrieving OCR$file DATA";
+    printf "* Retrieving OCR$file DATA..."
+    LOGGABLE_HTML_URL="https://ocremix.org/remix/OCR$file"
     url=$(curl --silent https://ocremix.org/remix/OCR$file | grep $MIRROR | sed 's/<a href=\"\(.*\)\">\(.*\)/\1/');
     url=$(echo $url | sed 's/<[^>]*>/\n/g');
     # ^ remove additional tags such as <li>
     if [ -n "$url" ]; then
-        echo "Retrieving MP3";
-        wget --limit-rate=$LIMIT -c -nv $url
-        if [ $? -ne 0 ]; then
-            echo "* Error: Downloading $url failed."
-        fi
-        if [ $WAIT -gt 0 ]; then
-            echo "Waiting $WAIT seconds.";
-            sleep $WAIT;
+        # -n: non-zero-length string
+        DL_NAME="${url##*/}" # Get the basename from a URL in bash.
+        if [ ! -f "$DL_NAME" ]; then
+            printf "Retrieving MP3...";
+            # echo "* $DL_NAME doesn't exist in `pwd`."
+            wget --limit-rate=$LIMIT --continue --no-verbose $url
+            # -c: --continue
+            # -nv: --no-verbose
+            # -nc: --no-clobber
+            if [ $? -ne 0 ]; then
+                ERROR="FAILED: Downloading $url failed (See <$LOGGABLE_HTML_URL>)."
+                echo "#$ERROR" | tee -a "$LOG_PATH"
+            else
+                echo "OK"
+                echo "#<$url>:" | tee -a "$LOG_PATH"
+                echo "`pwd`/$DL_NAME" | tee -a "$LOG_PATH"
+            fi
+            if [ $WAIT -gt 0 ]; then
+                echo "Waiting $WAIT seconds.";
+                sleep $WAIT;
+            fi
+        else
+            # echo "* INFO: \"`pwd`/$DL_NAME\" already exists"
+            echo "#`pwd`/$DL_NAME" | tee -a "$LOG_PATH"
         fi
     else
-        echo "No file, skipping.";
+        ERROR="* Error: URL=\"$url\" (blank) for OCR$file (See <$LOGGABLE_HTML_URL>)";
+        echo "$ERROR" | tee -a "$LOG_PATH"
     fi
 done
+
+echo "# Done $i" | tee -a "$LOG_PATH"
