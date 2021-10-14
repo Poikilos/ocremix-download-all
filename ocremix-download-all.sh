@@ -8,6 +8,7 @@ fi
 
 _DATE_STRING="`date '+%Y-%m-%d'`"
 LOG_PATH="$HOME/.var/log/ocremix-download-all-$_DATE_STRING.log"
+# ^ such as ~/.var/log/ocremix-download-all-2021-10-12.log
 
 echo | tee -a "$LOG_PATH"
 echo "#`date`" | tee -a "$LOG_PATH"
